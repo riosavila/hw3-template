@@ -1,0 +1,209 @@
+---
+title: "Homework 0"
+
+author: 
+    - "Your Name"
+    - "Your Partner's Name"
+format:
+  html: 
+    embed-resources: true
+  pdf: default
+jupyter: nbstata  
+execute: 
+  echo: false
+  output: false  
+---
+
+
+
+::: {.callout-note}
+
+The top of this file contains the YAML header, which is used to set the title and author of the document. The YAML header is delimited by three dashes on the top and bottom. The YAML header is not rendered in the final document.
+
+For your homeworks, you will need to change the title and author fields in the YAML header to your name and your partner's name.
+
+This file example assumes  you use `nbstata` and the full document can be rendered from the file itself. To do this, you need to include the last line -jupyter: nbstata- in the YAML header.
+
+Since all code will be run from the QMD file, we also add additional options to execution.
+
+    execute: 
+        echo: false
+        output: false
+
+This will prevent the code or ouput from being displayed in the final document. You can change this option to true if you want to display the code in the final document.
+
+Since the homeworks will use a -research project- format, you should add a title to each section.
+:::
+
+```{stata}
+** make sure to set linesize to 255 to proper display
+set linesize 255
+
+** loading data and Data cleaning
+
+use "data/oaxaca.dta", clear
+** Drop not necessary data
+drop if lnwage==.
+** create marital status variable
+gen     mstatus = 1 if single==1
+replace mstatus = 2 if married==1
+replace mstatus = 3 if divorced==1
+** and label them
+label var    mstatus "Marital Status"
+label define mstatus 1 "Single" 2 "Married" 3 "Divorced", modify
+label values mstatus
+```
+
+
+
+# Determinants of Wages: a first look at the data
+
+## Introduction
+
+There is considerable evidence that suggests that wages vary across individuals based on their characteristics.
+
+The human capital theory suggests that wages are determined by the individual's characteristics, such as education, experience, and other characteristics that may not be meaured or may remained unobserved.
+
+As individuals increase their education, they are expected to increase their productivity and, therefore, their wages. On the other hand, it is also possible that more education does not increase productivity, but generates a signal effect that increases wages. 
+
+Similarly, as individuals gain more experience, they are expected to increase their productivity and, therefore, their wages. In this case, we are only considering age as proxy for experience. 
+
+Finally, we may also consider marital status as a proxy for other characteristics that may affect wages. For example, married individuals may have more responsibilities than single or divorced, and, therefore, may require higher wages. While divorced and single are similar in terms of responsibilities, divorced individuals may still have other responsabilities with the previous marriage like child support. Thus, they may also require higher wages. 
+
+In this homework, we will explore the determinants of wages using a sample of 1434 individuals, from the Excerpt from the Swiss Labor Market Survey 1998. The data is available from an online repository, but a copy of the file is available at `data/oaxaca.dta`.
+
+:::{.callout-note}
+
+For this particular example, you won't need to provide descriptive statistics, as it was not explicitly requested. However, you should always produce them for your own benefit. 
+
+Adding details to your homeworks will help you to better understand the data and the results. And may be granted extra points.
+
+:::
+
+## Exploration: Descriptive Statistics
+
+## Exploration: Univariate analysis
+
+We explore the relationship between wages and the variables of interest by first using a simple correlation analysis.
+
+```{stata}
+** Getting Correlations
+corr lnwage educ age agesq single married divorced if lnwage!=.
+matrix corr_hw = r(C)
+matrix corr_hw = corr_hw[1,....]
+ssc install estout
+** you can either save the ouput here, or display it in the next cell
+** I ll display it
+```
+
+```{stata}
+*| output: asis
+esttab matrix(corr_hw), mlabels(, none) md
+```
+
+As it can be seen from this table, the correlation between wages and education and age is positive, indicating that as education and age increase, wages may also increase.
+
+With regards to marital status, the correlation is negative for single, and positive for divorced and specially for married. This suggest that married individuals may have higher wages than single or divorced individuals.
+
+In addition to this, we can also construct scatter plots and density plots to visualize the relationships between these variables and wages:
+
+```{stata}
+*| output: true
+*| layout-ncol: 2
+** As before you can either save the ouput here, or display it in the next cell
+scatter lnwage age, ytitle("Log(Wages)") xtitle("Age in Years") name(m1, replace)
+scatter lnwage educ, ytitle("Log(Wages)") xtitle("Age in Years") name(m2, replace)
+```
+
+
+In both cases, we see an increasing trend between wages and age and wages and education. However, we also see that there is a lot of dispersion in the data. 
+
+With respect to age, there is a sharp slope for younger individuals, but the slope is flatter for middle age and older invidivuals. In terms of education, there isn't a clear pattern because of the data dispersion and little variation in education. Nevertheless, there is some signs of a positive relationship between wages and education.
+
+Because marital status is a categorical variable, we can't construct a scatter plot. However, we can construct a density plot to visualize the relationship with respect to wages:
+
+```{stata}
+*| output: true
+** As before you can either save the ouput here, or display it in the next cell
+** Note, Stata uses -tabs- to create indentations. You may need to retype it here.
+two (kdensity lnwage if mstatus ==1 ) ///
+    (kdensity lnwage if mstatus ==2 ) ///
+    (kdensity lnwage if mstatus ==3 ) , ///
+    legend(order(1 "Single" 2 "Married" 3 "Divorced"))
+```
+
+This plot confirms what we suspected earlier, that singles have the lowest wages, followed by divorced, and married individuals have the highest wages. Among singles, there may be a cluster of low wage individuals. 
+
+In the next section, we will explore the relationship between wages and the variables of interest using a multivariate regression analysis.
+
+## Regression analysis
+
+We estimate a simple regression model to explore the relationship between wages and the variables of interest, as a function of age, education and martial status:
+
+```{stata}
+regress lnwage age educ i.mstatus
+est sto m1
+regress lnwage age educ i.mstatus agesq
+est sto m2
+```
+
+```{stata}
+*| output: asis
+esttab m1 m2 , se label nomtitle b(3) md r2  
+```
+
+The results of interest are in column 1. Based on this, age and education have a positive effect on wages, while being married and divorced have a positive effect on wages.
+
+Each year of age may increase wages in 1.4%, while each year of education may increase wages in 7.7%. Which is consistent with the results from the correlation analysis and our previous discussion.
+
+Regarding marital status, married and divorced earn wages that are about 8.7% and 11.3% higher than singles. This is not consistent with the previous dicussion. Looking at the density plot, however, it may be that the wage distribution of divorcees is larger than married or single, explaining the higher mean wage.
+
+In column 2, we add a quadratic term for age. We do this because is not likely that people will continue to earn higher wages as they become older. Instead, it is likely that wages will increase until a certain age, and then decrease. The coefficient for age is now larger than before at 0.11, while the coefficient for age squared is small, negative, but highly significant. 
+
+This result suggests that the original model may suffer from misspecification, since its not capturing the nonlinear relationship between wages and age. Also, that the "age" coefficient cannot be interpreted on its own. If we estimate the marginal effects for someone age 40 (about the average age in the sample), the effect its 0.0147. Just slighly higher than our main model.
+
+## Testing for model-misspecification and heteroskedasticity
+
+We test for model misspecification using the RESET test. They are based on the model that includes age squared in the specification.
+
+The results are included below:
+
+::: {.callout}
+
+## RESET test for model misspecification
+
+```{stata}
+*| output: asis
+qui:regress lnwage age educ i.mstatus agesq
+estat ovtest
+```
+
+:::
+
+Similarly, we test for heteroskedasticity using the default options in Stata. The results are included below:
+
+::: {.callout}
+
+## Heteroskedasticity test
+
+```{stata}
+*| output: asis
+estat hettest
+```
+
+:::
+
+Based on the results, we conclude that we reject the null hypothesis of correct specification of the model. This means that we should consider other specifications for the model.
+
+Similarly, we reject the null hypothesis of homoskedasticity. Because of this, statistical inference of the model should be done using robust standard errors, or Generalized Least Squares.
+
+## Conclusions
+
+In this homework, we explored the relationship between education, age and marital status as determinants of wages. We found that education and age have a positive effect on wages. In regards to marital status, once all factors are controlled for, singles earned the lowest wages, followed by married and divorced individuals earned the highest wages.
+
+The specification test, however, suggest that the model is misspecified with heteroskedastic errors. This means that the results should be interpreted with caution, and that other specifications should be considered.
+
+
+
+
+

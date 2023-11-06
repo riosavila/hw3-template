@@ -1,0 +1,302 @@
+---------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\Fernando\Documents\GitHub\homework-template\do_files\homework.log
+  log type:  text
+ opened on:   5 Sep 2023, 16:06:36
+
+. 
+. use data\oaxaca, clear
+(Excerpt from the Swiss Labor Market Survey 1998)
+
+. 
+. ** Data exploration
+. 
+. sum *
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+      lnwage |      1,434    3.357604    .5310458    .507681   5.259097
+        educ |      1,647    11.40134    2.374952          5       17.5
+       exper |      1,434    13.15324    9.967714          0   49.16667
+      tenure |      1,434    7.860937    8.120458          0   44.83333
+        isco |      1,434    4.014644     2.05824          1          9
+-------------+---------------------------------------------------------
+      female |      1,647    .5391621    .4986154          0          1
+         lfp |      1,647     .870674    .3356624          0          1
+         age |      1,647    39.25379    11.03187         18         62
+       agesq |      1,647    1662.489    894.0876        324       3844
+      single |      1,647     .343048    .4748715          0          1
+-------------+---------------------------------------------------------
+     married |      1,647    .5233758     .499605          0          1
+    divorced |      1,647    .1335762    .3402997          0          1
+       kids6 |      1,647    .2847602    .6629619          0          4
+     kids714 |      1,647    .3290832    .7073803          0          4
+          wt |      1,647    1.006181    .4116101   .5302977   3.181786
+
+. 
+. ** only for required variables
+. 
+. sum lnwage educ age agesq single married divorced
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+      lnwage |      1,434    3.357604    .5310458    .507681   5.259097
+        educ |      1,647    11.40134    2.374952          5       17.5
+         age |      1,647    39.25379    11.03187         18         62
+       agesq |      1,647    1662.489    894.0876        324       3844
+      single |      1,647     .343048    .4748715          0          1
+-------------+---------------------------------------------------------
+     married |      1,647    .5233758     .499605          0          1
+    divorced |      1,647    .1335762    .3402997          0          1
+
+. 
+. ** Note: There are some missing data. Either Keep not missing, or use "if" conditions for other analysis
+. 
+. ** Correlation between Wages and lnwage
+. 
+. corr lnwage educ age agesq single married divorced if lnwage!=.
+(obs=1,434)
+
+             |   lnwage     educ      age    agesq   single  married divorced
+-------------+---------------------------------------------------------------
+      lnwage |   1.0000
+        educ |   0.3649   1.0000
+         age |   0.3503   0.0609   1.0000
+       agesq |   0.3022   0.0390   0.9899   1.0000
+      single |  -0.2376  -0.0048  -0.5339  -0.4988   1.0000
+     married |   0.1693   0.0744   0.3182   0.2860  -0.7516   1.0000
+    divorced |   0.0901  -0.0999   0.2916   0.2887  -0.3232  -0.3813   1.0000
+
+
+. 
+. ** We may only need one column. 
+. ** some of the results are in r-objects. 
+. ** Tyle -return list- to see what is left after corr
+. 
+. ** What if we copy the matrix
+. matrix corr_hw = r(C)
+
+. ** but only 1 col is needed:
+. 
+. matrix corr_hw = corr_hw[1,....]
+
+. 
+. ** A simple Correlation table
+. ** We can use esttab! But is it installed?
+. 
+. ** Now it will be
+. ssc install estout
+checking estout consistency and verifying not already installed...
+all files already exist and are up to date.
+
+. 
+. esttab matrix(corr_hw), mlabels(, none) md
+
+
+|              |       lnwage |         educ |          age |        agesq |       single |      married |     divorc
+> ed |
+| ------------ | :----------: | :----------: | :----------: | :----------: | :----------: | :----------: | :---------
+> -: |
+| lnwage       |            1 |     .3649418 |      .350274 |      .302245 |    -.2375836 |     .1693033 |     .09007
+> 32 |
+
+
+. 
+. ** -md- will formated nicely for the homework.
+. ** and Markdown tables only accepts one row. So we need -mlabels(,none)
+. 
+. ** lets not forget saving for later! 
+. ** we can use qmd for that. 
+. ** I still do not know how to use -nbstata-. Lets just do it all here.
+. ** Do not forget, they have to go into -resources- folder
+. esttab matrix(corr_hw) using resources/tb1, mlabels(, none) md replace
+(output written to resources/tb1.md)
+
+. 
+. ** What about some plots?
+. 
+. scatter lnwage age
+
+. scatter lnwage educ 
+
+. 
+. ** and for mstatus?
+. ** lets create a new variable first
+. 
+. gen     mstatus = 1 if single==1
+(1,082 missing values generated)
+
+. replace mstatus = 2 if married==1
+(862 real changes made)
+
+. replace mstatus = 3 if divorced==1
+(220 real changes made)
+
+. 
+. label var mstatus "Marital Status"
+
+. ** This creates labels for each invidual value of mstatus
+. label define mstatus 1 "Single" 2 "Married" 3 "Divorced", modify
+
+. ** This one assignes the values-tag to the variable
+. label values mstatus mstatus 
+
+. 
+. ** So the plot? What about a density plot?
+. 
+. two (kdensity lnwage if mstatus ==1 ) ///
+>         (kdensity lnwage if mstatus ==2 ) ///
+>         (kdensity lnwage if mstatus ==3 ) , ///
+>         legend(order(1 "Single" 2 "Married" 3 "Divorced"))
+
+.         
+. ** Lets not forget saving it all
+. 
+. ** ok From the top!
+. 
+. scatter lnwage age, ytitle("Log(Wages)") xtitle("Age in Years")
+
+. graph export resources/fig1.png, width(1000) replace
+file resources/fig1.png saved as PNG format
+
+. scatter lnwage educ, ytitle("Log(Wages)") xtitle("Yrs of Education")    
+
+. graph export resources/fig2.png, width(1000) replace
+file resources/fig2.png saved as PNG format
+
+. 
+. two (kdensity lnwage if mstatus ==1 ) ///
+>         (kdensity lnwage if mstatus ==2 ) ///
+>         (kdensity lnwage if mstatus ==3 ) , ///
+>         legend(order(1 "Single" 2 "Married" 3 "Divorced"))
+
+.         
+. graph export resources/fig3.png, width(1000) replace    
+file resources/fig3.png saved as PNG format
+
+. 
+. ** Now the regressions. How many do we need?
+. ** For now 2
+. regress lnwage age educ i.mstatus
+
+      Source |       SS           df       MS      Number of obs   =     1,434
+-------------+----------------------------------   F(4, 1429)      =    116.88
+       Model |  99.6189809         4  24.9047452   Prob > F        =    0.0000
+    Residual |  304.500823     1,429   .21308665   R-squared       =    0.2465
+-------------+----------------------------------   Adj R-squared   =    0.2444
+       Total |  404.119804     1,433  .282009633   Root MSE        =    .46161
+
+------------------------------------------------------------------------------
+      lnwage | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         age |    .013525    .001326    10.20   0.000     .0109239    .0161261
+        educ |   .0765494   .0050831    15.06   0.000     .0665782    .0865205
+             |
+     mstatus |
+    Married  |   .0874386   .0302246     2.89   0.004     .0281492    .1467279
+   Divorced  |   .1134069   .0432338     2.62   0.009     .0285984    .1982155
+             |
+       _cons |   1.892089    .071622    26.42   0.000     1.751594    2.032585
+------------------------------------------------------------------------------
+
+. est sto m1
+
+. regress lnwage age educ i.mstatus agesq
+
+      Source |       SS           df       MS      Number of obs   =     1,434
+-------------+----------------------------------   F(5, 1428)      =    129.73
+       Model |  126.228613         5  25.2457227   Prob > F        =    0.0000
+    Residual |   277.89119     1,428  .194601674   R-squared       =    0.3124
+-------------+----------------------------------   Adj R-squared   =    0.3099
+       Total |  404.119804     1,433  .282009633   Root MSE        =    .44114
+
+------------------------------------------------------------------------------
+      lnwage | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         age |   .1060257   .0080113    13.23   0.000     .0903106    .1217408
+        educ |   .0674054   .0049202    13.70   0.000     .0577539    .0770569
+             |
+     mstatus |
+    Married  |  -.0026066   .0298927    -0.09   0.931     -.061245    .0560318
+   Divorced  |   .0382875   .0418125     0.92   0.360    -.0437329     .120308
+             |
+       agesq |  -.0011415   .0000976   -11.69   0.000     -.001333     -.00095
+       _cons |   .3188483   .1509488     2.11   0.035     .0227432    .6149534
+------------------------------------------------------------------------------
+
+. est sto m2
+
+. 
+. esttab m1 m2 using resources/reg1, se label nomtitle b(3) md replace
+(output written to resources/reg1.md)
+
+. 
+. ** Test for misspecification and heteroskedasiticy
+. ** Lets use the canned commands
+. 
+. regress lnwage age educ i.mstatus agesq
+
+      Source |       SS           df       MS      Number of obs   =     1,434
+-------------+----------------------------------   F(5, 1428)      =    129.73
+       Model |  126.228613         5  25.2457227   Prob > F        =    0.0000
+    Residual |   277.89119     1,428  .194601674   R-squared       =    0.3124
+-------------+----------------------------------   Adj R-squared   =    0.3099
+       Total |  404.119804     1,433  .282009633   Root MSE        =    .44114
+
+------------------------------------------------------------------------------
+      lnwage | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+         age |   .1060257   .0080113    13.23   0.000     .0903106    .1217408
+        educ |   .0674054   .0049202    13.70   0.000     .0577539    .0770569
+             |
+     mstatus |
+    Married  |  -.0026066   .0298927    -0.09   0.931     -.061245    .0560318
+   Divorced  |   .0382875   .0418125     0.92   0.360    -.0437329     .120308
+             |
+       agesq |  -.0011415   .0000976   -11.69   0.000     -.001333     -.00095
+       _cons |   .3188483   .1509488     2.11   0.035     .0227432    .6149534
+------------------------------------------------------------------------------
+
+. 
+. ** But how do we export them?
+. ** lets use a logfile. meed to use -text nomsg- options
+. ** and add the "display lines on top and bottom"
+.  
+. log using resources/ovtest, name(ovtest) replace text nomsg
+
+. estat ovtest
+
+Ramsey RESET test for omitted variables
+Omitted: Powers of fitted values of lnwage
+
+H0: Model has no omitted variables
+
+F(3, 1425) =  25.55
+  Prob > F = 0.0000
+
+. log close ovtest
+
+. 
+. log using resources/hettest, name(hettest) replace text nomsg
+(file C:\Users\Fernando\Documents\GitHub\homework-template\resources/hettest.log not found)
+
+. estat hettest
+
+Breusch–Pagan/Cook–Weisberg test for heteroskedasticity 
+Assumption: Normal error terms
+Variable: Fitted values of lnwage
+
+H0: Constant variance
+
+    chi2(1) =  54.58
+Prob > chi2 = 0.0000
+
+. log close hettest
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\Fernando\Documents\GitHub\homework-template\do_files\homework.log
+  log type:  text
+ closed on:   5 Sep 2023, 16:06:41
+---------------------------------------------------------------------------------------------------------------------

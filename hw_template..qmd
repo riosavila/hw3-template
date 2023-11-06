@@ -1,0 +1,68 @@
+---
+title: "Homework 0"
+
+author: 
+    - "Your Name"
+    - "Your Partner's Name"
+format:
+  html: 
+    embed-resources: true
+  pdf: default
+
+jupyter: nbstata  
+execute: 
+  echo: false
+  output: false   
+---
+
+::: {.callout-note}
+
+The top of this file contains the YAML header, which is used to set the title and author of the document. The YAML header is delimited by three dashes on the top and bottom. The YAML header is not rendered in the final document.
+
+For your homeworks, you will need to change the title and author fields in the YAML header to your name and your partner's name.
+
+This file example assumes you created all necessary files to be "rendered" in the `resources` folder.
+The second file will assume you use `nbstata` and the full document can be rendered from the file itself. 
+
+The last two lines will request that the document be rendered in both HTML and PDF formats. 
+
+Since the homeworks will use a -research project- format, you should add a title to each section.
+
+The rest of the structure here is simply a guide. You can add as many sections as you need to complete the homework. Or organize it differently.
+
+See the QMD file to see how the code is setup.
+
+:::
+
+# Title
+
+## Section I Introduction
+
+## Section II Data
+
+## Section III Analysis
+
+## Section IV Conclusion
+
+## References [if applicable]
+
+# Specific Instructions 
+
+If you decide to use -nbstata- to RUN the code and generate the document from the QMD file, the last 3 lines of the YAML section will be necessary. 
+
+```
+jupyter: nbstata  
+execute: 
+  echo: false
+  output: false  
+```  
+
+Otherwise, you can delete them. 
+
+If you want to use -nbstata- for your homework, you will need to `fence` your code appropriatly. See file <example/homework_2.qmd> for an example.
+
+However, if you decide to produce the code from your dofile, and "add" it to your QMD later on, follow the example of file <example/homework_1.qmd>.
+
+For a quick guide on how to use Markdown and Quarto, refer to the [Quarto Guide](https://quarto.org/docs/get-started/authoring/vscode.html)
+
+

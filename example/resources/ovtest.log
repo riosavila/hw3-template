@@ -1,0 +1,12 @@
+
+. estat ovtest
+
+Ramsey RESET test for omitted variables
+Omitted: Powers of fitted values of lnwage
+
+H0: Model has no omitted variables
+
+F(3, 1425) =  25.55
+  Prob > F = 0.0000
+
+. log close ovtest
